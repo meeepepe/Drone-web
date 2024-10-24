@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>DroneAssignment2-65010468</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8f9fa;
+            color: #343a40;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #007bff;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        nav {
+            margin: 2rem 0;
+        }
+
+        .button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            border: none;
+            font-size: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .input-group {
+            display: flex;
+            margin-bottom: 1rem;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .input-group input {
+            border: 1px solid #ced4da;
+            border-radius: 8px 0 0 8px;
+            padding: 10px;
+            width: 100%;
+            font-size: 1rem;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-group button {
+            border: 1px solid #28a745;
+            border-radius: 0 8px 8px 0;
+            background-color: #28a745;
+            color: white;
+            padding: 10px 15px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-group button:hover {
+            background-color: #218838;
+            transform: translateY(-2px);
+        }
+
+        #logsContainer {
+            display: none;
+            margin-top: 1.5rem;
+            max-width: 800px;
+            width: 100%;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        #logs {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .log-entry {
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            transition: transform 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .log-entry:hover {
+            transform: scale(1.02);
+        }
+
+        #result {
+            max-width: 600px;
+            width: 100%;
+            margin-top: 2rem;
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin: 1rem 0 0.5rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <h1>Drone</h1>
+        <nav>
+            <button id="viewLogsButton" class="button">View Logs</button>
+        </nav>
+        <div id="alertContainer"></div>
+
+        <div class="input-group">
+            <input id="droneId" type="text" placeholder="Enter drone ID" required />
+            <button type="submit" id="searchButton">Search</button>
+        </div>
+
+        <div id="result"></div>
+
+        <div id="logsContainer">
+            <h2>Drone Logs</h2>
+            <div id="logs"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('searchButton').addEventListener('click', async function (event) {
+            event.preventDefault();
+            const droneId = document.getElementById('droneId').value;
+            const resultDiv = document.getElementById('result');
+
+            try {
+                const response = await fetch(`/configs/${droneId}`);
+                if (!response.ok) throw new Error('Drone not found');
+                const droneConfig = await response.json();
+                resultDiv.innerHTML = `
+                    <h2>Drone Configuration:</h2>
+                    <p><strong>Drone ID:</strong> ${droneConfig.drone_id}</p>
+                    <p><strong>Name:</strong> ${droneConfig.drone_name}</p>
+                    <p><strong>Condition:</strong> ${droneConfig.condition}</p>
+                    <p><strong>Light:</strong> ${droneConfig.light}</p>
+                    <p><strong>Max Speed:</strong> ${droneConfig.max_speed}</p>
+                    <p><strong>Country:</strong> ${droneConfig.country}</p>
+                    <p><strong>Population:</strong> ${droneConfig.population}</p>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        });
+
+        document.getElementById('viewLogsButton').addEventListener('click', async function () {
+            const logsDiv = document.getElementById('logs');
+            const logsContainer = document.getElementById('logsContainer');
+            logsDiv.innerHTML = '<p>Loading...</p>';
+            logsContainer.style.display = 'block';
+
+            try {
+                const response = await fetch('/logs');
+                if (!response.ok) throw new Error('Failed to fetch logs');
+                const logs = await response.json();
+                logsDiv.innerHTML = logs.length > 0 
+                    ? logs.map(log => `
+                        <div class="log-entry">
+                            <h3>Log ID: ${log.id}</h3>
+                            <p><strong>Drone ID:</strong> ${log.drone_id}</p>
+                            <p><strong>Drone Name:</strong> ${log.drone_name}</p>
+                            <p><strong>Temperature (°C):</strong> ${log.celsius}</p>
+                            <p><strong>Collection ID:</strong> ${log.collectionId}</p>
+                            <p><strong>Collection Name:</strong> ${log.collectionName}</p>
+                            <p><strong>Country:</strong> ${log.country}</p>
+                            <p><strong>Created:</strong> ${log.created}</p>
+                            <p><strong>Updated:</strong> ${log.updated}</p>
+                        </div>
+                    `).join('') 
+                    : '<p>No logs available.</p>';
+            } catch (error) {
+                logsDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+
+</html>
